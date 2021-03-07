@@ -10,29 +10,14 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'name', 'email', 'password',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password', 'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
@@ -60,9 +45,6 @@ class User extends Authenticatable
     
         /**
      * $userIdで指定されたユーザをフォローする。
-     *
-     * @param  int  $userId
-     * @return bool
      */
     public function follow($userId)
     {
@@ -83,9 +65,6 @@ class User extends Authenticatable
 
     /**
      * $userIdで指定されたユーザをアンフォローする。
-     *
-     * @param  int  $userId
-     * @return bool
      */
     public function unfollow($userId)
     {
@@ -106,9 +85,6 @@ class User extends Authenticatable
 
     /**
      * 指定された $userIdのユーザをこのユーザがフォロー中であるか調べる。フォロー中ならtrueを返す。
-     *
-     * @param  int  $userId
-     * @return bool
      */
     public function is_following($userId)
     {
@@ -121,5 +97,17 @@ class User extends Authenticatable
     public function loadRelationshipCounts()
     {
         $this->loadCount(['microposts', 'followings', 'followers']);
+    }
+     /**
+     * このユーザとフォロー中ユーザの投稿に絞り込む。
+     */
+    public function feed_microposts()
+    {
+        // このユーザがフォロー中のユーザのidを取得して配列にする
+        $userIds = $this->followings()->pluck('users.id')->toArray();
+        // このユーザのidもその配列に追加
+        $userIds[] = $this->id;
+        // それらのユーザが所有する投稿に絞り込む
+        return Micropost::whereIn('user_id', $userIds);
     }
 }
